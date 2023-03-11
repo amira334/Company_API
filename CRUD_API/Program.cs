@@ -1,4 +1,6 @@
 using Company_API.Data;
+using Company_API.Repository.IRepository;
+using Company_API.Repository;
 using Company_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -7,12 +9,14 @@ using Microsoft.OpenApi.Models;
 using System.Diagnostics.Contracts;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args); 
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
+
+builder.Services.AddScoped<IUnitofWork, UnitofWork>();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -47,8 +51,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// 
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme) 
   .AddJwtBearer(options =>
   {
@@ -62,7 +64,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
           ValidAudience = builder.Configuration["Jwt:Audience"],
           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
       };
-  }); // 
+  }); 
 
 builder.Services.AddAuthorization(options =>
 {
