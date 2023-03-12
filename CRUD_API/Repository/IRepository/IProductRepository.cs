@@ -1,6 +1,10 @@
-﻿namespace Company_API.Repository.IRepository
+﻿using Company_API.Models;
+
+namespace Company_API.Repository.IRepository
 {
-    public class IProductRepository
+    public interface IProductRepository : IRepository<Product>
     {
+        Task<Product> UpdateAsync(Product entity);
+
     }
 }

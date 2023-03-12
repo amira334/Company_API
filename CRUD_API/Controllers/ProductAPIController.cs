@@ -1,12 +1,16 @@
-﻿using Company_API.Data;
-using Company_API.models;
-using Company_API.models.DTO;
+﻿using AutoMapper;
+using Company_API.Data;
+using Company_API.Models;
+using Company_API.Models.DTO;
+using Company_API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
+using System.Net;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace Company_API.Controllers
 
@@ -16,44 +20,89 @@ namespace Company_API.Controllers
     [ApiController]
     public class ProductAPIController : ControllerBase
     {
-        private readonly DatabaseContext _context;
+        protected APIResponse _response;
+        private readonly IProductRepository _dbProduct;
+        private readonly IMapper _mapper;
 
-        public ProductAPIController(DatabaseContext context)
+        public ProductAPIController(IProductRepository dbProduct, IMapper mapper)
         {
-            _context = context;
-        }
+            _dbProduct = dbProduct;
+            _mapper = mapper;
+            _response = new();
+        }// 
 
         [HttpGet]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]  
-        
-        public ActionResult<IEnumerable<ProductDTO>> GetProducts()
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+
+        public async Task<ActionResult<APIResponse>> GetProducts(
+            [FromQuery] string? search, int pageSize = 0, int pageNumber = 1)
         {
-            return Ok(_context.Products);
+            try
+            {
+
+                IEnumerable<Product> productList;
+             
+                productList = await _dbProduct.GetAllAsync(pageSize: pageSize,
+                        pageNumber: pageNumber);
+                
+                if (!string.IsNullOrEmpty(search))
+                {
+                    productList = productList.Where(u => u.Name.ToLower().Contains(search));
+                }
+                Pagination pagination = new() { PageNumber = pageNumber, PageSize = pageSize }; 
+
+                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+                _response.Result = _mapper.Map<List<ProductDTO>>(productList);
+                _response.StatusCode = HttpStatusCode.OK;
+                return Ok(_response);
+
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages
+                     = new List<string>() { ex.ToString() };
+            }
+            return _response;
+
         }
 
         [HttpGet("{id:int}", Name = "GetProduct")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public ActionResult<ProductDTO> GetProduct(int id)
+        public async Task<ActionResult<APIResponse>> GetProduct(int id)
         {
-            if (id == 0)
+            try
             {
-                return BadRequest();
+                if (id == 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                var product = await _dbProduct.GetAsync(u => u.Id == id);
+                if (product == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+                _response.Result = _mapper.Map<ProductDTO>(product);
+                _response.StatusCode = HttpStatusCode.OK;
+                return Ok(_response);
             }
-
-
-            var product = _context.Products.FirstOrDefault(u => u.Id == id);
-            if (product == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _response.IsSuccess = false;
+                _response.ErrorMessages
+                     = new List<string>() { ex.ToString() };
             }
-
-            return Ok(product);
-
+            return _response;
         }
 
         [HttpPost]
@@ -61,41 +110,36 @@ namespace Company_API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public ActionResult<ProductDTO> CreateProduct([FromBody] ProductDTO productDTO)
+        public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
-            //
-            //check model state 
-            //if (ModelState.IsValid)
-            //{
-            //    return BadRequest(ModelState);
-            //}
-            if (_context.Products.FirstOrDefault(u => u.Name.ToLower() == productDTO.Name.ToLower()) != null)
+            try
             {
-                ModelState.AddModelError("CustomError", "Product already exists!");
-                return BadRequest(ModelState);
+    
+                if (await _dbProduct.GetAsync(u => u.Name.ToLower() == createDTO.Name.ToLower()) != null)
+                {
+                    ModelState.AddModelError("ErrorMessages", "Product already Exists!");
+                    return BadRequest(ModelState);
+                }
+
+                if (createDTO == null)
+                {
+                    return BadRequest(createDTO);
+                }
+                
+                Product product = _mapper.Map<Product>(createDTO);
+
+                await _dbProduct.CreateAsync(product);
+                _response.Result = _mapper.Map<ProductDTO>(product);
+                _response.StatusCode = HttpStatusCode.Created;
+                return CreatedAtRoute("GetProduct", new { id = product.Id }, _response);
             }
-
-            if (productDTO == null)
+            catch (Exception ex)
             {
-                return BadRequest(productDTO);
+                _response.IsSuccess = false;
+                _response.ErrorMessages
+                     = new List<string>() { ex.ToString() };
             }
-            if (productDTO.Id > 0)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-
-            Product model = new()
-            {
-                Name = productDTO.Name,
-                Description = productDTO.Description,
-                Price = productDTO.Price,
-                Stock = productDTO.Stock
-            };
-            _context.Products.Add(model);
-            _context.SaveChanges();
-
-            return CreatedAtRoute("GetProduct", new { id = productDTO.Id }, productDTO);
-
+            return _response;
         }
 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -106,22 +150,31 @@ namespace Company_API.Controllers
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpDelete("{id:int}", Name = "DeleteProduct")]
-
-        public IActionResult DeleteProduct(int id)
+        public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
-            if (id == 0)
+            try
             {
-                return BadRequest();
+                if (id == 0)
+                {
+                    return BadRequest();
+                }
+                var villa = await _dbProduct.GetAsync(u => u.Id == id);
+                if (villa == null)
+                {
+                    return NotFound();
+                }
+                await _dbProduct.RemoveAsync(villa);
+                _response.StatusCode = HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+                return Ok(_response);
             }
-            var product = _context.Products.FirstOrDefault(u => u.Id == id);
-            if (product == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _response.IsSuccess = false;
+                _response.ErrorMessages
+                     = new List<string>() { ex.ToString() };
             }
-            _context.Products.Remove(product);
-            _context.SaveChanges();
-            return NoContent();
-
+            return _response;
         }
 
 
@@ -133,30 +186,29 @@ namespace Company_API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
 
-        public IActionResult UpdateProduct(int id, [FromBody] ProductDTO productDTO)
+        public async Task<ActionResult<APIResponse>> UpdateProduct(int id, [FromBody] ProductUpdateDTO updateDTO) 
         {
-            if (productDTO == null || id != productDTO.Id)
+            try
             {
-                return BadRequest();
+                if (updateDTO == null || id != updateDTO.Id)
+                {
+                    return BadRequest();
+                }
+
+                Product model = _mapper.Map<Product>(updateDTO);
+
+                await _dbProduct.UpdateAsync(model);
+                _response.StatusCode = HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+                return Ok(_response);
             }
-            //var product = _context.Products.FirstOrDefault(u => u.ProductId == id);
-            // product.Name = productDTO.Name;
-            // product.Description = productDTO.Description;
-            // product.Price = productDTO.Price;
-            // product.Stock = productDTO.Stock;
-
-            Product model = new()
+            catch (Exception ex)
             {
-                Id = productDTO.Id,
-                Name = productDTO.Name,
-                Description = productDTO.Description, 
-                Price = productDTO.Price,
-                Stock = productDTO.Stock
-            };
-            _context.Products.Update(model);
-            _context.SaveChanges();
-
-            return NoContent();
+                _response.IsSuccess = false;
+                _response.ErrorMessages
+                     = new List<string>() { ex.ToString() }; 
+            }
+            return _response;
         }
 
         [HttpPatch("{id:int}", Name = "UpdatePartialProduct")]
@@ -166,36 +218,26 @@ namespace Company_API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
 
-        public IActionResult UpdatePartialProduct(int id, JsonPatchDocument<ProductDTO> patchDTO)
+        public async Task<IActionResult> UpdatePartialProduct(int id, JsonPatchDocument<ProductUpdateDTO> patchDTO)
         {
             if (patchDTO == null || id == 0)
             {
                 return BadRequest();
             }
-            var product = _context.Products.FirstOrDefault(u => u.Id == id);
+            var product = await _dbProduct.GetAsync(u => u.Id == id, tracked: false);
 
-            ProductDTO productDTO = new()
-            {
-                Id = product.Id, 
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock
-            };
+            ProductUpdateDTO productDTO = _mapper.Map<ProductUpdateDTO>(product);
+
+
             if (product == null)
             {
                 return BadRequest();
             }
-            patchDTO.ApplyTo(productDTO, ModelState); 
-            Product model = new()
-            {
-                Name = productDTO.Name,
-                Description = productDTO.Description,
-                Price = productDTO.Price,
-                Stock = productDTO.Stock
-            };
-            _context.Products.Update(model);
-            _context.SaveChanges();
+            patchDTO.ApplyTo(productDTO, ModelState);
+            Product model = _mapper.Map<Product>(productDTO);
+
+            await _dbProduct.UpdateAsync(model);
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

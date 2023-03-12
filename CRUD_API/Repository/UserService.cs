@@ -1,5 +1,5 @@
-﻿using Company_API.models.Dto;
-using Company_API.models;
+﻿using Company_API.Models.Dto;
+using Company_API.Models;
 using Company_API.Data;
 
 namespace Company_API.Services

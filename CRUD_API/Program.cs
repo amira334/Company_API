@@ -16,7 +16,11 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 // Add services to the container.
 
-builder.Services.AddScoped<IUnitofWork, UnitofWork>();
+builder.Services.AddResponseCaching();
+
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+//builder.Services.AddScoped<IUnitofWork, UnitofWork>();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

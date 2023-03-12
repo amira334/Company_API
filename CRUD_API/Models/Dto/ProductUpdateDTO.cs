@@ -2,7 +2,7 @@
 
 namespace Company_API.Models.DTO
 {
-    public class ProductDTO
+    public class ProductUpdateDTO
     {
         public int Id { get; set; }
         [Required]

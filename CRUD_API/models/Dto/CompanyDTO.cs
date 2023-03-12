@@ -1,4 +1,4 @@
-﻿namespace Company_API.models.Dto
+﻿namespace Company_API.Models.Dto
 {
     public class CompanyDTO
     {

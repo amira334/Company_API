@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Company_API.models
+namespace Company_API.Models
 {
     public class User
     {

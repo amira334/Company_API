@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Company_API.Services;
-using Company_API.models.Dto;
-using Company_API.models;
+using Company_API.Models.Dto;
+using Company_API.Models;
 
 namespace Company_API.Controllers
 {

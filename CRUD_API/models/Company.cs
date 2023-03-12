@@ -1,4 +1,4 @@
-﻿namespace Company_API.models
+﻿namespace Company_API.Models
 {
     public class Company
     {

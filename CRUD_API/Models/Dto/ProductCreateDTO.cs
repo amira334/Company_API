@@ -2,9 +2,8 @@
 
 namespace Company_API.Models.DTO
 {
-    public class ProductDTO
+    public class ProductCreateDTO
     {
-        public int Id { get; set; }
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }

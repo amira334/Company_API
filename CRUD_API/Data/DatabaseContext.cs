@@ -1,5 +1,5 @@
-﻿using Company_API.models;
-using Company_API.models.DTO;
+﻿using Company_API.Models;
+using Company_API.Models.DTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace Company_API.Data
