@@ -12,5 +12,6 @@ namespace Company_API.Data
 
         public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Company> Companies { get; set; }
     }
 }

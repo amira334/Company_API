@@ -1,8 +1,8 @@
 ﻿namespace Company_API.Models.DTO
 {
-    public class RefreshTokenDTO
+    public class LoginDTO
     {
-        public string RefreshToken { get; set; }
         public string Username { get; set; }
+        public string Password { get; set; }
     }
 }
