@@ -176,7 +176,6 @@ namespace Company_API.Controllers
             return _response;
         }
 
-
         [HttpPut("{id:int}", Name = "UpdateCompany")]
         [Authorize(Roles = "SuperAdmin,Admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -211,7 +210,7 @@ namespace Company_API.Controllers
         }
 
         [HttpPatch("{id:int}", Name = "UpdatePartialCompany")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [Authorize(Roles = "SuperAdmin,Admin")] 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

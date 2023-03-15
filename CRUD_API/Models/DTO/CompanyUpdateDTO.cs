@@ -1,4 +1,4 @@
-﻿namespace Company_API.Models.Dto
+﻿namespace Company_API.Models.DTO
 {
     public class CompanyUpdateDTO
     {

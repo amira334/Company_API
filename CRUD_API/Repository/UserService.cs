@@ -1,4 +1,4 @@
-﻿using Company_API.Models.Dto;
+﻿using Company_API.Models.DTO;
 using Company_API.Models;
 using Company_API.Data;
 
