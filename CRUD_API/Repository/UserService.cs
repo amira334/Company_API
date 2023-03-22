@@ -42,7 +42,6 @@ namespace Company_API.Services
             return user;
         }
 
-
         // To renew accesstoken
         public User GetUserByRefreshToken(string refreshToken)
         {
@@ -53,6 +52,17 @@ namespace Company_API.Services
                 return null;
             }
             return user;
+        }
+
+        public UserRole GetUserRole(int userRoleId)
+        {
+            var userRole = _dbContext.UserRoles.SingleOrDefault(u => u.Id == userRoleId);
+
+            if (userRole == null)
+            {
+                return null;
+            }
+            return userRole;
         }
 
         public async Task<User> Register(RegisterDTO registerDTO)

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Company_API.Models
 {
+    [Table("User")]
     public class User
     {
         public int Id { get; set; }
@@ -11,9 +12,8 @@ namespace Company_API.Models
         public string LastName { get; set; }
         public string Email { get; set; }
         public string PasswordHash { get; set; }
+        [ForeignKey("UserRole")]
         public int UserRoleId { get; set; }
-        [ForeignKey("UserRoleId")]
-        [ValidateNever]
         public UserRole UserRole { get; set; }
         public string? RefreshToken { get; set; }
     }

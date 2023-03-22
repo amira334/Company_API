@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Company_API.Models
 {
+    [Table("Product")]
     public class Product
     {
         [Key]

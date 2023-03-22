@@ -34,9 +34,9 @@ namespace Company_API.Controllers
                 return BadRequest(new { message = "Username or password is incorrect" });
             }
 
+            UserRole userRole = _userService.GetUserRole(user.UserRoleId);
 
-
-            var token = GenerateJwtToken(user.Username, user.UserRoleId);
+            var token = GenerateJwtToken(user.Username, userRole.Name);
             var refreshToken = GenerateRefreshToken();
 
             await _userService.SaveRefreshToken(user.Id, refreshToken);
@@ -53,7 +53,8 @@ namespace Company_API.Controllers
         public async Task<ActionResult<dynamic>> Refresh([FromBody] RefreshTokenDTO model)
         {
             var user = _userService.GetUserByRefreshToken(model.RefreshToken);
-            var token = GenerateJwtToken(user.Username, user.UserRoleId);
+            UserRole userRole = _userService.GetUserRole(user.UserRoleId);
+            var token = GenerateJwtToken(user.Username, userRole.Name);
             var newRefreshToken = GenerateRefreshToken();
 
             await _userService.SaveRefreshToken(user.Id, newRefreshToken);
@@ -72,7 +73,8 @@ namespace Company_API.Controllers
             try
             {
                 var user = await _userService.Register(registerDto);
-                var token = GenerateJwtToken(user.Username, user.UserRoleId);
+                UserRole userRole = _userService.GetUserRole(user.UserRoleId);
+                var token = GenerateJwtToken(user.Username, userRole.Name);
                 var refreshToken = GenerateRefreshToken();
 
                 await _userService.SaveRefreshToken(user.Id, refreshToken);
@@ -94,13 +96,13 @@ namespace Company_API.Controllers
             }
         }
 
-        private string GenerateJwtToken(string username, int role)
+        private string GenerateJwtToken(string username, string role)
         {
             var claims = new[] 
             {
-      new Claim(ClaimTypes.Name, username),
-      new Claim(ClaimTypes.Role, role.ToString()) // or get roles from database or other data source
-    };
+                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Role, role) // or get roles from database or other data source
+            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

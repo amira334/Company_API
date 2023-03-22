@@ -1,5 +1,8 @@
-﻿namespace Company_API.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Company_API.Models
 {
+    [Table("Company")]
     public class Company
     {
         public int Id { get; set; }

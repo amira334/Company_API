@@ -11,32 +11,34 @@ namespace Company_API.Data
         }
         public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Company> Companies { get; set; }
+
+        public DbSet<CompanyPermission> CompanyPermissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); 
+            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<UserRole>().HasData(
                 new UserRole
                 {
                     Id = 1,
-                    Name = "Super Admin",
+                    Name = "SuperAdmin",
                     IsActive = true,
                 },
-              new UserRole
-              {
-                  Id = 2,
-                  Name = "Admin",
-                  IsActive = true,
-              },
-              new UserRole
-              {
-                  Id = 3,
-                  Name = "User",
-                  IsActive = true,
-              }
-              
-              );
+                new UserRole
+                {
+                    Id = 2,
+                    Name = "Admin",
+                    IsActive = true,
+                },
+                new UserRole
+                {
+                    Id = 3,
+                    Name = "User",
+                    IsActive = true,
+                }
+            );
         }
-        }
+    }
 }

@@ -13,5 +13,7 @@ namespace Company_API.Models.DTO
         public int Price { get; set; }
         [Required]
         public int Stock { get; set; }
+        [Required]
+        public int CompanyId { get; set; }
     }
 }

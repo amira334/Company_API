@@ -2,11 +2,12 @@ using Company_API.Data;
 using Company_API.Repository.IRepository;
 using Company_API.Repository;
 using Company_API.Services;
+using Company_API;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Diagnostics.Contracts;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args); 
@@ -19,11 +20,21 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 builder.Services.AddResponseCaching();
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddAutoMapper(typeof(MappingConfig));
 
 //builder.Services.AddScoped<IUnitofWork, UnitofWork>();
 
-builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddControllers(option => {
+    option.CacheProfiles.Add("Default30",
+      new CacheProfile()
+      {
+          Duration = 30
+      });
+    //option.ReturnHttpNotAcceptable=true;
+}).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();;
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 
 builder.Services.AddEndpointsApiExplorer();
 

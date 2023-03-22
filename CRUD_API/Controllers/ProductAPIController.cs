@@ -23,13 +23,15 @@ namespace Company_API.Controllers
         protected APIResponse _response;
         private readonly IProductRepository _dbProduct;
         private readonly IMapper _mapper;
+        private readonly DatabaseContext _dbContext;
 
-        public ProductAPIController(IProductRepository dbProduct, IMapper mapper)
+        public ProductAPIController(IProductRepository dbProduct, IMapper mapper, DatabaseContext dbContext)
         {
             _dbProduct = dbProduct;
             _mapper = mapper;
             _response = new();
-        }// 
+            _dbContext = dbContext;
+        }
 
         [HttpGet]
         [ResponseCache(CacheProfileName = "Default30")]
@@ -45,7 +47,7 @@ namespace Company_API.Controllers
             {
 
                 IEnumerable<Product> productList;
-             
+            
                 productList = await _dbProduct.GetAllAsync(pageSize: pageSize,
                         pageNumber: pageNumber);
                 
@@ -65,7 +67,7 @@ namespace Company_API.Controllers
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages
-                     = new List<string>() { ex.ToString() };
+                    = new List<string>() { ex.ToString() };
             }
             return _response;
 
@@ -100,7 +102,7 @@ namespace Company_API.Controllers
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages
-                     = new List<string>() { ex.ToString() };
+                    = new List<string>() { ex.ToString() };
             }
             return _response;
         }
@@ -128,6 +130,23 @@ namespace Company_API.Controllers
                 
                 Product product = _mapper.Map<Product>(createDTO);
 
+                string userName = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name").Value;
+
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == userName);
+
+
+                // Get the CompanyId of the company for which the product is being created
+                int companyId = createDTO.CompanyId;
+
+                // Query the CompanyPermission table to check if there is a record with the matching UserId and CompanyId
+                var companyPermission = await _dbContext.CompanyPermissions.FirstOrDefaultAsync(cp => cp.UserId == user.Id && cp.CompanyId == companyId);
+
+                // If there is no matching record in the CompanyPermission table, return a Forbidden response
+                if (companyPermission == null)
+                {
+                    return Forbid();
+                }
+
                 await _dbProduct.CreateAsync(product);
                 _response.Result = _mapper.Map<ProductDTO>(product);
                 _response.StatusCode = HttpStatusCode.Created;
@@ -137,7 +156,7 @@ namespace Company_API.Controllers
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages
-                     = new List<string>() { ex.ToString() };
+                    = new List<string>() { ex.ToString() };
             }
             return _response;
         }
@@ -172,7 +191,7 @@ namespace Company_API.Controllers
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages
-                     = new List<string>() { ex.ToString() };
+                    = new List<string>() { ex.ToString() };
             }
             return _response;
         }
@@ -206,7 +225,7 @@ namespace Company_API.Controllers
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages
-                     = new List<string>() { ex.ToString() }; 
+                    = new List<string>() { ex.ToString() }; 
             }
             return _response;
         }
