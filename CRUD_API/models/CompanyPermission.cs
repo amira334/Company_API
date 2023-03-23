@@ -12,7 +12,7 @@ namespace Company_API.Models
         [ValidateNever]
         public User User { get; set; }
         public int CompanyId { get; set; }
-        [ForeignKey("CompnayId")]
+        [ForeignKey("CompanyId")]
         [ValidateNever]
         public Company Company { get; set; }
     }

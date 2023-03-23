@@ -3,7 +3,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Company_API.Migrations
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace Company_API.Migrations 
 {
     /// <inheritdoc />
     public partial class initial : Migration
@@ -42,7 +44,7 @@ namespace Company_API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Products",
+                name: "Product",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -56,16 +58,16 @@ namespace Company_API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Products", x => x.Id);
+                    table.PrimaryKey("PK_Product", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Products_Company_CompnayId",
+                        name: "FK_Product_Company_CompnayId",
                         column: x => x.CompnayId,
                         principalTable: "Company",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "User",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -80,23 +82,69 @@ namespace Company_API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.PrimaryKey("PK_User", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Users_UserRole_UserRoleId",
+                        name: "FK_User_UserRole_UserRoleId",
                         column: x => x.UserRoleId,
                         principalTable: "UserRole",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CompanyPermission",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    CompanyId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CompanyPermission", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CompanyPermission_Company_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Company",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CompanyPermission_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "UserRole",
+                columns: new[] { "Id", "IsActive", "Name" },
+                values: new object[,]
+                {
+                    { 1, true, "SuperAdmin" },
+                    { 2, true, "Admin" },
+                    { 3, true, "User" }
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_Products_CompnayId",
-                table: "Products",
+                name: "IX_CompanyPermission_CompanyId",
+                table: "CompanyPermission",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CompanyPermission_UserId",
+                table: "CompanyPermission",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Product_CompnayId",
+                table: "Product",
                 column: "CompnayId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_UserRoleId",
-                table: "Users",
+                name: "IX_User_UserRoleId",
+                table: "User",
                 column: "UserRoleId");
         }
 
@@ -104,10 +152,13 @@ namespace Company_API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "CompanyPermission");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Product");
+
+            migrationBuilder.DropTable(
+                name: "User");
 
             migrationBuilder.DropTable(
                 name: "Company");

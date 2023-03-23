@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Company_API.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230311083138_initial")]
+    [Migration("20230323041919_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace Company_API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Company_API.models.Company", b =>
+            modelBuilder.Entity("Company_API.Models.Company", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,7 +54,30 @@ namespace Company_API.Migrations
                     b.ToTable("Company");
                 });
 
-            modelBuilder.Entity("Company_API.models.Product", b =>
+            modelBuilder.Entity("Company_API.Models.CompanyPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CompanyPermission");
+                });
+
+            modelBuilder.Entity("Company_API.Models.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -86,10 +109,10 @@ namespace Company_API.Migrations
 
                     b.HasIndex("CompnayId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Product");
                 });
 
-            modelBuilder.Entity("Company_API.models.User", b =>
+            modelBuilder.Entity("Company_API.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,10 +150,10 @@ namespace Company_API.Migrations
 
                     b.HasIndex("UserRoleId");
 
-                    b.ToTable("Users");
+                    b.ToTable("User");
                 });
 
-            modelBuilder.Entity("Company_API.models.UserRole", b =>
+            modelBuilder.Entity("Company_API.Models.UserRole", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -148,20 +171,59 @@ namespace Company_API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserRole");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IsActive = true,
+                            Name = "SuperAdmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            IsActive = true,
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            IsActive = true,
+                            Name = "User"
+                        });
                 });
 
-            modelBuilder.Entity("Company_API.models.Product", b =>
+            modelBuilder.Entity("Company_API.Models.CompanyPermission", b =>
                 {
-                    b.HasOne("Company_API.models.Company", "Company")
+                    b.HasOne("Company_API.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Company_API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Company_API.Models.Product", b =>
+                {
+                    b.HasOne("Company_API.Models.Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompnayId");
 
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("Company_API.models.User", b =>
+            modelBuilder.Entity("Company_API.Models.User", b =>
                 {
-                    b.HasOne("Company_API.models.UserRole", "UserRole")
+                    b.HasOne("Company_API.Models.UserRole", "UserRole")
                         .WithMany()
                         .HasForeignKey("UserRoleId")
                         .OnDelete(DeleteBehavior.Cascade)

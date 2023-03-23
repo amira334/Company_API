@@ -11,8 +11,10 @@ namespace Company_API.Models.DTO
         [Required]
         public string Description { get; set; }
         [Required]
-        public int Price { get; set; }
+        public int Price { get; set; } 
         [Required]
         public int Stock { get; set; }
+        [Required]
+        public int CompanyId { get; set; }
     }
 }

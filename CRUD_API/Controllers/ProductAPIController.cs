@@ -4,6 +4,7 @@ using Company_API.Models;
 using Company_API.Models.DTO;
 using Company_API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -111,7 +112,7 @@ namespace Company_API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)] 
         public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
             try
@@ -128,7 +129,7 @@ namespace Company_API.Controllers
                     return BadRequest(createDTO);
                 }
                 
-                Product product = _mapper.Map<Product>(createDTO);
+                Product product = _mapper.Map<Product>(createDTO); // 
 
                 string userName = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name").Value;
 
@@ -216,9 +217,25 @@ namespace Company_API.Controllers
 
                 Product model = _mapper.Map<Product>(updateDTO);
 
+                string userName = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name").Value;
+
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == userName);
+
+                // Get the CompanyId of the company for which the product is being created
+                int companyId = updateDTO.CompanyId;
+
+                // Query the CompanyPermission table to check if there is a record with the matching UserId and CompanyId
+                var companyPermission = await _dbContext.CompanyPermissions.FirstOrDefaultAsync(cp => cp.UserId == user.Id && cp.CompanyId == companyId);
+
+                // If there is no matching record in the CompanyPermission table, return a Forbidden response
+                if (companyPermission == null)
+                {
+                    return Forbid();
+                }
+
                 await _dbProduct.UpdateAsync(model);
                 _response.StatusCode = HttpStatusCode.NoContent;
-                _response.IsSuccess = true;
+                _response.IsSuccess = true; 
                 return Ok(_response);
             }
             catch (Exception ex)
@@ -243,15 +260,33 @@ namespace Company_API.Controllers
             {
                 return BadRequest();
             }
-            var product = await _dbProduct.GetAsync(u => u.Id == id, tracked: false);
+            var product = await _dbProduct.GetAsync(u => u.Id == id, tracked: false); 
 
             ProductUpdateDTO productDTO = _mapper.Map<ProductUpdateDTO>(product);
 
 
-            if (product == null)
+            if (product == null)  
             {
                 return BadRequest();
             }
+      
+            
+            string userName = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name").Value;
+
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == userName);
+
+            // Get the CompanyId of the company for which the product is being created
+            int companyId = productDTO.CompanyId;
+
+            // Query the CompanyPermission table to check if there is a record with the matching UserId and CompanyId
+            var companyPermission = await _dbContext.CompanyPermissions.FirstOrDefaultAsync(cp => cp.UserId == user.Id && cp.CompanyId == companyId);
+
+            // If there is no matching record in the CompanyPermission table, return a Forbidden response
+            if (companyPermission == null)
+            {
+                return Forbid();
+            }
+
             patchDTO.ApplyTo(productDTO, ModelState);
             Product model = _mapper.Map<Product>(productDTO);
 

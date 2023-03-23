@@ -48,7 +48,30 @@ namespace Company_API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Companies");
+                    b.ToTable("Company");
+                });
+
+            modelBuilder.Entity("Company_API.Models.CompanyPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CompanyPermission");
                 });
 
             modelBuilder.Entity("Company_API.Models.Product", b =>
@@ -83,7 +106,7 @@ namespace Company_API.Migrations
 
                     b.HasIndex("CompnayId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Product");
                 });
 
             modelBuilder.Entity("Company_API.Models.User", b =>
@@ -124,7 +147,7 @@ namespace Company_API.Migrations
 
                     b.HasIndex("UserRoleId");
 
-                    b.ToTable("Users");
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Company_API.Models.UserRole", b =>
@@ -151,7 +174,7 @@ namespace Company_API.Migrations
                         {
                             Id = 1,
                             IsActive = true,
-                            Name = "Super Admin"
+                            Name = "SuperAdmin"
                         },
                         new
                         {
@@ -165,6 +188,25 @@ namespace Company_API.Migrations
                             IsActive = true,
                             Name = "User"
                         });
+                });
+
+            modelBuilder.Entity("Company_API.Models.CompanyPermission", b =>
+                {
+                    b.HasOne("Company_API.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Company_API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Company_API.Models.Product", b =>
